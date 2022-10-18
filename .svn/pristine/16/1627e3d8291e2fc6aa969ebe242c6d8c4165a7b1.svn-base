@@ -1,0 +1,76 @@
+from rest_framework import serializers
+from IGL_account.models import User
+from .models import Platform, Game, Tournament, StageType, Stage, Group, Round, Match, MatchParticipant
+
+
+class PlatformSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Platform
+        fields = (
+            'name', 'manufacturer', 'model',)
+
+
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Game
+        fields = (
+            'display_name', 'slug', 'full_name', 'short_name', 'platforms', 'display_image',)
+
+
+class TournamentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tournament
+        fields = (
+            'name', 'full_name', 'slug', 'game', 'size', 'scheduled_date_start', 'scheduled_date_end',)
+
+
+class StageTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StageType
+        fields = ('name',)
+
+
+class StageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Stage
+        fields = ('name', 'tournament', 'number', 'stage_type', 'is_closed',)
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ('name', 'tournament', 'closed',)
+
+
+class RoundSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Round
+        fields = ('tournament', 'stage', 'group', 'number', 'start_datetime', 'end_datetime',)
+
+
+class MatchChoicesField(serializers.Field):
+    def __init__(self, choices, **kwargs):
+        self._choices = choices
+        super(MatchChoicesField, self).__init__(**kwargs)
+
+    def to_representation(self, obj):
+        return self._choices[obj]
+
+    def to_internal_value(self, data):
+        return getattr(self._choices, data)
+
+
+class MatchSerializer(serializers.ModelSerializer):
+    ext_report_status = MatchChoicesField(choices=Match.TOURNAMENT_REPORT_STATUS_CHOICES)
+
+    class Meta:
+        model = Match
+        fields = (
+            'tournament', 'round', 'stage', 'group', 'number', 'scheduled_datetime', 'start_datetime', 'end_datetime',
+            'ext_report_status',)
+
+
+class MatchParticipantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MatchParticipant
+        fields = ('user', 'tournament', 'match', 'checked_in_at',)
